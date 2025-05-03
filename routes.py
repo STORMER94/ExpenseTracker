@@ -1,9 +1,11 @@
-from flask import render_template, url_for, flash, redirect, request, jsonify
+from flask import render_template, url_for, flash, redirect, request, jsonify, send_file
 from flask_login import login_user, current_user, logout_user, login_required
 from datetime import datetime
 from sqlalchemy import extract, func
 import json
 import calendar
+import os
+from werkzeug.utils import secure_filename
 
 from app import app, db
 from models import User, Transaction, Category
@@ -11,6 +13,7 @@ from forms import (RegistrationForm, LoginForm, TransactionForm, CategoryForm,
                   TransactionFilterForm, ChangePasswordForm, ProfileUpdateForm,
                   ResetPasswordRequestForm, ResetPasswordForm)
 from email_utils import send_password_reset_email
+from excel_utils import create_template, process_transaction_excel
 
 # Context processor to provide utility functions to templates
 @app.context_processor
@@ -386,6 +389,55 @@ def transactions():
         Transaction.date.desc()).paginate(page=page, per_page=per_page, error_out=False)
     
     return render_template('transactions.html', transactions=transactions)
+
+@app.route('/transactions/template')
+@login_required
+def download_transaction_template():
+    """Download an Excel template for bulk transaction upload"""
+    excel_file = create_template()
+    return send_file(
+        excel_file,
+        download_name='transaction_template.xlsx',
+        as_attachment=True,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+
+@app.route('/transactions/upload', methods=['POST'])
+@login_required
+def upload_transactions():
+    """Process the uploaded Excel file of transactions"""
+    if 'file' not in request.files:
+        flash('No file part', 'danger')
+        return redirect(url_for('add_transaction'))
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        flash('No selected file', 'danger')
+        return redirect(url_for('add_transaction'))
+    
+    if file and '.' in file.filename and file.filename.rsplit('.', 1)[1].lower() in ['xlsx', 'xls']:
+        try:
+            success_count, errors = process_transaction_excel(file, current_user.id)
+            
+            if success_count > 0:
+                flash(f'Successfully imported {success_count} transactions!', 'success')
+            
+            if errors:
+                for error in errors[:10]:  # Show only first 10 errors to avoid overloading
+                    flash(error, 'warning')
+                
+                if len(errors) > 10:
+                    flash(f'... and {len(errors) - 10} more errors. Please correct your file and try again.', 'warning')
+            
+            return redirect(url_for('transactions'))
+            
+        except Exception as e:
+            flash(f'Error processing file: {str(e)}', 'danger')
+            return redirect(url_for('add_transaction'))
+    else:
+        flash('File must be an Excel spreadsheet (.xlsx or .xls)', 'danger')
+        return redirect(url_for('add_transaction'))
 
 @app.route('/transactions/add', methods=['GET', 'POST'])
 @login_required

@@ -5,9 +5,49 @@
 {% block content %}
 <div class="row">
     <div class="col-md-8 mx-auto">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary bg-opacity-10">
+                <h4 class="mb-0">Bulk Import Transactions</h4>
+            </div>
+            <div class="card-body">
+                <p class="card-text">
+                    You can import multiple transactions at once by uploading an Excel file.
+                    Download the template below, fill it with your transactions, and upload it.
+                </p>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('download_transaction_template') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-download me-2"></i> Download Excel Template
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <form action="{{ url_for('upload_transactions') }}" method="POST" enctype="multipart/form-data" class="d-flex flex-column h-100">
+                            <div class="mb-3 flex-grow-1">
+                                <label for="file" class="form-label">Select Excel File</label>
+                                <input class="form-control" type="file" id="file" name="file" accept=".xlsx,.xls">
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-upload me-2"></i> Upload & Import
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle me-2"></i> 
+                    <strong>Important:</strong> Make sure each transaction has a valid Category ID that belongs to your account.
+                    You can find your Category IDs on the <a href="{{ url_for('categories') }}" class="alert-link">Categories</a> page.
+                </div>
+            </div>
+        </div>
+        
         <div class="card shadow-sm">
             <div class="card-header">
-                <h4 class="mb-0">Add New Transaction</h4>
+                <h4 class="mb-0">Add Single Transaction</h4>
             </div>
             <div class="card-body">
                 <form method="POST" novalidate>
