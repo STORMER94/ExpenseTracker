@@ -70,7 +70,10 @@
                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
                                         <div class="modal-body">
-                                            Are you sure you want to delete this transaction for <span class="currency-symbol">₹</span><strong>{{ "%.2f"|format(transaction.amount) }}</strong>?
+                                            <p>Are you sure you want to delete this transaction?</p>
+                                            <div class="alert alert-info">
+                                              <strong>Amount:</strong> <span class="currency-symbol">₹</span>{{ "%.2f"|format(transaction.amount) }}
+                                            </div>
                                         </div>
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
