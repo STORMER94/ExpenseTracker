@@ -21,39 +21,37 @@
             <table class="table table-hover mb-0">
                 <thead class="table-dark">
                     <tr>
-                        <th>Title</th>
+                        <th>Description</th>
                         <th>Category</th>
                         <th>Date</th>
+                        <th>Fiscal Year</th>
+                        <th>Month</th>
                         <th>Amount</th>
-                        <th>User</th> <!-- Added user information column -->
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for expense in expenses.items %}
                     <tr>
-                        <td data-label="Title">{{ expense.title }}</td>
+                        <td data-label="Description">{{ expense.description }}</td>
                         <td data-label="Category">
-                            <span class="badge 
-                            {% if expense.category == 'food' %}bg-success
-                            {% elif expense.category == 'transportation' %}bg-info
-                            {% elif expense.category == 'housing' %}bg-warning
-                            {% elif expense.category == 'utilities' %}bg-danger
-                            {% elif expense.category == 'entertainment' %}bg-primary
-                            {% else %}bg-secondary{% endif %}">
-                                {{ expense.category|capitalize }}
+                            <span class="badge bg-secondary">
+                                {{ expense.category_info.name }}
                             </span>
                         </td>
                         <td data-label="Date">{{ expense.date.strftime('%b %d, %Y') }}</td>
+                        <td data-label="Fiscal Year">{{ expense.fiscal_year }}</td>
+                        <td data-label="Month">{{ expense.date.strftime('%B') }}</td>
                         <td data-label="Amount">${{ "%.2f"|format(expense.amount) }}</td>
-                        <td data-label="User">
-                            <!-- User's first and last name displayed here -->
-                            <span class="fw-bold user-name">{{ expense.user.first_name }} {{ expense.user.last_name }}</span>
-                        </td>
                         <td data-label="Actions">
-                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ expense.id }}">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('edit_expense', expense_id=expense.id) }}" class="btn btn-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ expense.id }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
 
                             <!-- Delete Confirmation Modal -->
                             <div class="modal fade" id="deleteModal{{ expense.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ expense.id }}" aria-hidden="true">
@@ -64,7 +62,7 @@
                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
                                         <div class="modal-body">
-                                            Are you sure you want to delete expense <strong>"{{ expense.title }}"</strong> for <strong>${{ "%.2f"|format(expense.amount) }}</strong>?
+                                            Are you sure you want to delete this expense for <strong>${{ "%.2f"|format(expense.amount) }}</strong>?
                                         </div>
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
