@@ -1,0 +1,94 @@
+{% extends "layout.html" %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2>Your Profile</h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h4 class="mb-0">Personal Information</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {{ form.first_name.label(class="form-label") }}
+                            {% if form.first_name.errors %}
+                                {{ form.first_name(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.first_name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.first_name(class="form-control") }}
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.last_name.label(class="form-label") }}
+                            {% if form.last_name.errors %}
+                                {{ form.last_name(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.last_name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.last_name(class="form-control") }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.email.label(class="form-label") }}
+                        {% if form.email.errors %}
+                            {{ form.email(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.email.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.email(class="form-control") }}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Account Security</h4>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h5>Username</h5>
+                    <p class="mb-0 text-muted">{{ current_user.username }}</p>
+                </div>
+                <div class="mb-4">
+                    <h5>Password</h5>
+                    <p class="text-muted">For security reasons, we don't display your password. You can change it anytime.</p>
+                </div>
+                <div class="d-grid">
+                    <a href="{{ url_for('change_password') }}" class="btn btn-primary">
+                        <i class="fas fa-key me-1"></i> Change Password
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

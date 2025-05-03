@@ -5,7 +5,7 @@
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-8">
-        <h2>Expense Categories</h2>
+        <h2>Your Categories</h2>
     </div>
     <div class="col-md-4 text-end">
         <a href="{{ url_for('add_category') }}" class="btn btn-success">
@@ -14,14 +14,14 @@
     </div>
 </div>
 
-<div class="card shadow-sm mb-4">
+{% if categories %}
+<div class="card shadow-sm">
     <div class="card-body p-0">
-        {% if categories %}
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead class="table-dark">
                     <tr>
-                        <th>Name</th>
+                        <th>Category Name</th>
                         <th>Description</th>
                         <th>Actions</th>
                     </tr>
@@ -29,31 +29,30 @@
                 <tbody>
                     {% for category in categories %}
                     <tr>
-                        <td data-label="Name">{{ category.name }}</td>
-                        <td data-label="Description">{{ category.description }}</td>
-                        <td data-label="Actions">
+                        <td>{{ category.name }}</td>
+                        <td>{{ category.description }}</td>
+                        <td>
                             <div class="btn-group btn-group-sm">
                                 <a href="{{ url_for('edit_category', category_id=category.id) }}" class="btn btn-primary">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal{{ category.id }}">
+                                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ category.id }}">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
 
                             <!-- Delete Confirmation Modal -->
-                            <div class="modal fade" id="deleteCategoryModal{{ category.id }}" tabindex="-1" aria-labelledby="deleteCategoryModalLabel{{ category.id }}" aria-hidden="true">
+                            <div class="modal fade" id="deleteModal{{ category.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ category.id }}" aria-hidden="true">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
                                         <div class="modal-header">
-                                            <h5 class="modal-title" id="deleteCategoryModalLabel{{ category.id }}">Confirm Delete</h5>
+                                            <h5 class="modal-title" id="deleteModalLabel{{ category.id }}">Confirm Delete</h5>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
                                         <div class="modal-body">
-                                            Are you sure you want to delete the category <strong>"{{ category.name }}"</strong>?
+                                            Are you sure you want to delete the category <strong>{{ category.name }}</strong>?
                                             <p class="text-danger mt-2">
-                                                <i class="fas fa-exclamation-triangle me-1"></i> 
-                                                This action cannot be undone. Any categories in use by expenses cannot be deleted.
+                                                <i class="fas fa-exclamation-triangle"></i> This action cannot be undone if the category is used in transactions.
                                             </p>
                                         </div>
                                         <div class="modal-footer">
@@ -71,18 +70,18 @@
                 </tbody>
             </table>
         </div>
-        {% else %}
-        <div class="card text-center p-5">
-            <div class="card-body">
-                <i class="fas fa-tags fa-4x mb-3 text-muted"></i>
-                <h3>No custom categories found</h3>
-                <p class="text-muted">You haven't created any custom expense categories yet.</p>
-                <a href="{{ url_for('add_category') }}" class="btn btn-primary mt-3">
-                    <i class="fas fa-plus-circle me-1"></i> Create Your First Category
-                </a>
-            </div>
-        </div>
-        {% endif %}
     </div>
 </div>
+{% else %}
+<div class="card text-center p-5 shadow-sm">
+    <div class="card-body">
+        <i class="fas fa-tags fa-5x mb-3 text-muted"></i>
+        <h3>No categories found</h3>
+        <p class="text-muted">You haven't added any categories yet.</p>
+        <a href="{{ url_for('add_category') }}" class="btn btn-primary mt-3">
+            <i class="fas fa-plus-circle me-1"></i> Add Your First Category
+        </a>
+    </div>
+</div>
+{% endif %}
 {% endblock %}

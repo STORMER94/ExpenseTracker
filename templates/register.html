@@ -4,13 +4,14 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-8">
+    <div class="col-md-8 col-lg-6">
         <div class="card shadow-sm">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0"><i class="fas fa-user-plus me-2"></i>Create an Account</h4>
+            <div class="card-header text-center">
+                <h2 class="mb-0"><i class="fas fa-wallet me-2"></i>Expense Manager</h2>
+                <p class="text-muted">Create a new account</p>
             </div>
             <div class="card-body">
-                <form method="POST" action="">
+                <form method="POST" novalidate>
                     {{ form.hidden_tag() }}
                     
                     <div class="row mb-3">
@@ -84,7 +85,7 @@
                         {% endif %}
                     </div>
                     
-                    <div class="mb-3">
+                    <div class="mb-4">
                         {{ form.confirm_password.label(class="form-label") }}
                         {% if form.confirm_password.errors %}
                             {{ form.confirm_password(class="form-control is-invalid") }}
@@ -98,13 +99,13 @@
                         {% endif %}
                     </div>
                     
-                    <div class="d-grid gap-2">
-                        {{ form.submit(class="btn btn-primary") }}
+                    <div class="d-grid">
+                        {{ form.submit(class="btn btn-primary btn-lg") }}
                     </div>
                 </form>
             </div>
             <div class="card-footer text-center">
-                <small>Already have an account? <a href="{{ url_for('login') }}">Login</a></small>
+                <p class="mb-0">Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
             </div>
         </div>
     </div>

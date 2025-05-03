@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="row">
-    <div class="col-md-8 mx-auto">
+    <div class="col-md-6 mx-auto">
         <div class="card shadow-sm">
             <div class="card-header">
                 <h4 class="mb-0">Add New Category</h4>
@@ -39,7 +39,6 @@
                         {% else %}
                             {{ form.description(class="form-control", rows=3) }}
                         {% endif %}
-                        <div class="form-text">Optional description to help identify this category.</div>
                     </div>
                     
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">

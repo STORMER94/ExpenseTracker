@@ -29,10 +29,10 @@
                             <a class="nav-link" href="{{ url_for('home') }}">Dashboard</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('expenses') }}">Expenses</a>
+                            <a class="nav-link" href="{{ url_for('transactions') }}">Transactions</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('add_expense') }}">Add Expense</a>
+                            <a class="nav-link" href="{{ url_for('add_transaction') }}">Add Transaction</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('categories') }}">Categories</a>
@@ -43,6 +43,8 @@
                                 <i class="fas fa-user me-1"></i> {{ current_user.first_name }}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                                <li><a class="dropdown-item" href="{{ url_for('profile') }}">Profile</a></li>
+                                <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a></li>
                             </ul>
                         </li>
