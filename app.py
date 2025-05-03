@@ -22,12 +22,8 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "default-secret-key-for-development")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)  # Needed for url_for to generate with https
 
-# Configure database connection
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
-app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_recycle": 300,
-    "pool_pre_ping": True,
-}
+# Configure database connection - using SQLite
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///expense_tracker.db"
 
 # Initialize database with app
 db.init_app(app)
