@@ -4,8 +4,33 @@
 
 {% block content %}
 <div class="row mb-4">
-    <div class="col-md-12">
+    <div class="col-md-8">
         <h2 class="mb-4">Welcome, {{ current_user.first_name }} {{ current_user.last_name }}!</h2>
+    </div>
+    <div class="col-md-4">
+        <!-- Filters for charts -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Filter Data</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('home') }}">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {{ filter_form.fiscal_year.label(class="form-label") }}
+                            {{ filter_form.fiscal_year(class="form-select") }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ filter_form.month.label(class="form-label") }}
+                            {{ filter_form.month(class="form-select") }}
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        {{ filter_form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -18,6 +43,12 @@
                     <div>
                         <h6 class="text-uppercase">Total Expenses</h6>
                         <h2 class="mb-0">${{ "%.2f"|format(total_expenses) }}</h2>
+                        <small>
+                            {% if selected_month > 0 %}
+                                {{ filter_form.month.choices[selected_month][1] }} 
+                            {% endif %}
+                            FY {{ selected_year }}
+                        </small>
                     </div>
                     <div>
                         <i class="fas fa-money-bill-wave fa-3x opacity-50"></i>
@@ -34,11 +65,42 @@
                     <div>
                         <h6 class="text-uppercase">Number of Expenses</h6>
                         <h2 class="mb-0">{{ expenses_count }}</h2>
+                        <small>
+                            {% if selected_month > 0 %}
+                                {{ filter_form.month.choices[selected_month][1] }} 
+                            {% endif %}
+                            FY {{ selected_year }}
+                        </small>
                     </div>
                     <div>
                         <i class="fas fa-receipt fa-3x opacity-50"></i>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row mb-4">
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Expenses by Category</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Monthly Expenses</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="monthlyChart"></canvas>
             </div>
         </div>
     </div>
@@ -57,7 +119,7 @@
                     <table class="table table-hover mb-0">
                         <thead>
                             <tr>
-                                <th>Title</th>
+                                <th>Description</th>
                                 <th>Category</th>
                                 <th>Date</th>
                                 <th>Amount</th>
@@ -66,16 +128,10 @@
                         <tbody>
                             {% for expense in recent_expenses %}
                             <tr>
-                                <td>{{ expense.title }}</td>
+                                <td>{{ expense.description }}</td>
                                 <td>
-                                    <span class="badge 
-                                    {% if expense.category == 'food' %}bg-success
-                                    {% elif expense.category == 'transportation' %}bg-info
-                                    {% elif expense.category == 'housing' %}bg-warning
-                                    {% elif expense.category == 'utilities' %}bg-danger
-                                    {% elif expense.category == 'entertainment' %}bg-primary
-                                    {% else %}bg-secondary{% endif %}">
-                                        {{ expense.category|capitalize }}
+                                    <span class="badge bg-secondary">
+                                        {{ expense.category_info.name }}
                                     </span>
                                 </td>
                                 <td>{{ expense.date.strftime('%b %d, %Y') }}</td>
@@ -105,4 +161,79 @@
         </a>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Prepare data for charts
+    const categoryData = {{ category_data|safe }};
+    const monthlyData = {{ monthly_data|safe }};
+    
+    // Pie Chart for Categories
+    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+    new Chart(categoryCtx, {
+        type: 'pie',
+        data: {
+            labels: categoryData.labels,
+            datasets: [{
+                data: categoryData.values,
+                backgroundColor: [
+                    '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', 
+                    '#e74a3b', '#858796', '#6f42c1', '#5a5c69',
+                    '#fd7e14', '#20c9a6', '#e83e8c', '#6610f2'
+                ],
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                },
+                title: {
+                    display: true,
+                    text: 'Expense Distribution'
+                }
+            }
+        }
+    });
+    
+    // Bar Chart for Monthly Data
+    const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+    new Chart(monthlyCtx, {
+        type: 'bar',
+        data: {
+            labels: monthlyData.labels,
+            datasets: [{
+                label: 'Expenses',
+                data: monthlyData.values,
+                backgroundColor: '#4e73df',
+                borderColor: '#2e59d9',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value;
+                        }
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Monthly Expense Trends'
+                }
+            }
+        }
+    });
+});
+</script>
 {% endblock %}

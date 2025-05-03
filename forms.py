@@ -1,8 +1,8 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, FloatField, TextAreaField, SelectField, DateField
+from wtforms import StringField, PasswordField, SubmitField, FloatField, TextAreaField, SelectField, DateField, IntegerField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError, NumberRange
 import datetime
-from models import User
+from models import User, Category
 from app import db
 
 class RegistrationForm(FlaskForm):
@@ -29,22 +29,37 @@ class LoginForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Login')
 
+class CategoryForm(FlaskForm):
+    name = StringField('Category Name', validators=[DataRequired(), Length(max=50)])
+    description = TextAreaField('Description', validators=[Length(max=200)])
+    submit = SubmitField('Save Category')
+
 class ExpenseForm(FlaskForm):
-    title = StringField('Title', validators=[DataRequired(), Length(max=100)])
     amount = FloatField('Amount', validators=[DataRequired(), NumberRange(min=0.01)])
     date = DateField('Date', format='%Y-%m-%d', validators=[DataRequired()], default=datetime.date.today)
-    category = SelectField('Category', validators=[DataRequired()], 
-                          choices=[
-                              ('food', 'Food & Dining'), 
-                              ('transportation', 'Transportation'), 
-                              ('housing', 'Housing'), 
-                              ('utilities', 'Utilities'), 
-                              ('entertainment', 'Entertainment'), 
-                              ('healthcare', 'Healthcare'), 
-                              ('shopping', 'Shopping'), 
-                              ('travel', 'Travel'), 
-                              ('education', 'Education'),
-                              ('other', 'Other')
-                          ])
+    category_id = SelectField('Category', validators=[DataRequired()], coerce=int)
     description = TextAreaField('Description', validators=[Length(max=500)])
-    submit = SubmitField('Add Expense')
+    submit = SubmitField('Save Expense')
+    
+    def __init__(self, user, *args, **kwargs):
+        super(ExpenseForm, self).__init__(*args, **kwargs)
+        self.category_id.choices = [(c.id, c.name) for c in Category.query.filter_by(user_id=user.id).all()]
+
+class ExpenseFilterForm(FlaskForm):
+    fiscal_year = SelectField('Fiscal Year', coerce=int)
+    month = SelectField('Month', coerce=int, choices=[
+        (0, 'All Months'),
+        (1, 'January'),
+        (2, 'February'),
+        (3, 'March'),
+        (4, 'April'),
+        (5, 'May'),
+        (6, 'June'),
+        (7, 'July'),
+        (8, 'August'),
+        (9, 'September'),
+        (10, 'October'),
+        (11, 'November'),
+        (12, 'December')
+    ])
+    submit = SubmitField('Apply Filter')
