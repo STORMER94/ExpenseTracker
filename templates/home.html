@@ -1,0 +1,108 @@
+{% extends "layout.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2 class="mb-4">Welcome, {{ current_user.first_name }} {{ current_user.last_name }}!</h2>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Summary Cards -->
+    <div class="col-md-6 mb-4">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase">Total Expenses</h6>
+                        <h2 class="mb-0">${{ "%.2f"|format(total_expenses) }}</h2>
+                    </div>
+                    <div>
+                        <i class="fas fa-money-bill-wave fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase">Number of Expenses</h6>
+                        <h2 class="mb-0">{{ expenses_count }}</h2>
+                    </div>
+                    <div>
+                        <i class="fas fa-receipt fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Expenses</h5>
+                <a href="{{ url_for('expenses') }}" class="btn btn-sm btn-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_expenses %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th>Date</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for expense in recent_expenses %}
+                            <tr>
+                                <td>{{ expense.title }}</td>
+                                <td>
+                                    <span class="badge 
+                                    {% if expense.category == 'food' %}bg-success
+                                    {% elif expense.category == 'transportation' %}bg-info
+                                    {% elif expense.category == 'housing' %}bg-warning
+                                    {% elif expense.category == 'utilities' %}bg-danger
+                                    {% elif expense.category == 'entertainment' %}bg-primary
+                                    {% else %}bg-secondary{% endif %}">
+                                        {{ expense.category|capitalize }}
+                                    </span>
+                                </td>
+                                <td>{{ expense.date.strftime('%b %d, %Y') }}</td>
+                                <td>${{ "%.2f"|format(expense.amount) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-4 text-center">
+                    <p class="mb-0">You haven't added any expenses yet.</p>
+                    <a href="{{ url_for('add_expense') }}" class="btn btn-primary mt-3">
+                        <i class="fas fa-plus-circle me-1"></i> Add Your First Expense
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12 text-center">
+        <a href="{{ url_for('add_expense') }}" class="btn btn-lg btn-success">
+            <i class="fas fa-plus-circle me-1"></i> Add New Expense
+        </a>
+    </div>
+</div>
+{% endblock %}
