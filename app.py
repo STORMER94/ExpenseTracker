@@ -36,7 +36,7 @@ login_manager.login_view = 'login'
 # Initialize database tables
 with app.app_context():
     # Import models here to ensure they're registered with SQLAlchemy
-    from models import User, Expense
+    from models import User, Transaction, Category
     db.create_all()
 
 # Import user loader function

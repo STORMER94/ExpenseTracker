@@ -8,9 +8,9 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(64), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
-    first_name = db.Column(db.String(64), nullable=False)  # Added field for first name
-    last_name = db.Column(db.String(64), nullable=False)   # Added field for last name
-    expenses = db.relationship('Expense', backref='user', lazy=True)
+    first_name = db.Column(db.String(64), nullable=False)
+    last_name = db.Column(db.String(64), nullable=False)
+    transactions = db.relationship('Transaction', backref='user', lazy=True)
     categories = db.relationship('Category', backref='user', lazy=True)
     
     def set_password(self, password):
@@ -27,24 +27,24 @@ class Category(db.Model):
     name = db.Column(db.String(50), nullable=False)
     description = db.Column(db.Text, nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    expenses = db.relationship('Expense', backref='category_info', lazy=True)
+    transactions = db.relationship('Transaction', backref='category_info', lazy=True)
     
     def __repr__(self):
         return f'<Category {self.name}>'
 
-class Expense(db.Model):
+class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    # Title field has been removed
     amount = db.Column(db.Float, nullable=False)
     date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    # Now using a foreign key to the Category table
+    # Transaction type: 'debit' or 'credit'
+    transaction_type = db.Column(db.String(10), nullable=False, default='debit')
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=False)
     description = db.Column(db.Text, nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
-    # Adding fields to support filters
+    # Fields to support filters
     fiscal_year = db.Column(db.Integer, nullable=False)
     month = db.Column(db.Integer, nullable=False)
     
     def __repr__(self):
-        return f'<Expense ${self.amount:.2f} - {self.description}>'
+        return f'<Transaction ${self.amount:.2f} - {self.transaction_type} - {self.description}>'

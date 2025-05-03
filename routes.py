@@ -6,8 +6,9 @@ import json
 import calendar
 
 from app import app, db
-from models import User, Expense, Category
-from forms import RegistrationForm, LoginForm, ExpenseForm, CategoryForm, ExpenseFilterForm
+from models import User, Transaction, Category
+from forms import (RegistrationForm, LoginForm, TransactionForm, CategoryForm, 
+                  TransactionFilterForm, ChangePasswordForm, ProfileUpdateForm)
 
 # Context processor to provide utility functions to templates
 @app.context_processor
@@ -26,7 +27,7 @@ def index():
 @login_required
 def home():
     # Get fiscal years for filter
-    fiscal_years = db.session.query(Expense.fiscal_year).filter_by(user_id=current_user.id).distinct().all()
+    fiscal_years = db.session.query(Transaction.fiscal_year).filter_by(user_id=current_user.id).distinct().all()
     fiscal_years = [year[0] for year in fiscal_years]
     
     # If no fiscal years found (new user), use current year
@@ -39,80 +40,151 @@ def home():
     selected_month = request.args.get('month', type=int) or 0
     
     # Create the filter form
-    filter_form = ExpenseFilterForm()
+    filter_form = TransactionFilterForm()
     filter_form.fiscal_year.choices = [(year, f"FY {year}") for year in fiscal_years]
     filter_form.fiscal_year.default = selected_year
     filter_form.month.default = selected_month
     
-    # Get filtered expenses
-    query = Expense.query.filter_by(user_id=current_user.id, fiscal_year=selected_year)
+    # Get filtered transactions
+    query = Transaction.query.filter_by(user_id=current_user.id, fiscal_year=selected_year)
     
     if selected_month > 0:
         query = query.filter_by(month=selected_month)
     
-    # Get recent expenses
-    recent_expenses = query.order_by(Expense.date.desc()).limit(5).all()
+    # Get recent transactions
+    recent_transactions = query.order_by(Transaction.date.desc()).limit(5).all()
     
-    # Calculate total expense amount for the filter
-    total_expenses = query.with_entities(func.sum(Expense.amount)).scalar() or 0
+    # Calculate totals for different transaction types
+    debit_query = query.filter_by(transaction_type='debit')
+    credit_query = query.filter_by(transaction_type='credit')
     
-    # Count total expenses for the filter
-    expenses_count = query.count()
+    total_debits = debit_query.with_entities(func.sum(Transaction.amount)).scalar() or 0
+    total_credits = credit_query.with_entities(func.sum(Transaction.amount)).scalar() or 0
     
-    # Get expense data for charts
-    category_data = get_expense_by_category(selected_year, selected_month)
-    monthly_data = get_expense_by_month(selected_year)
+    # Count total transactions
+    transaction_count = query.count()
+    
+    # Get data for charts
+    category_data = get_transactions_by_category(selected_year, selected_month)
+    monthly_data = get_transactions_by_month(selected_year)
+    credit_debit_data = get_credit_vs_debit(selected_year, selected_month)
     
     return render_template('home.html', 
-                          recent_expenses=recent_expenses,
-                          total_expenses=total_expenses,
-                          expenses_count=expenses_count,
+                          recent_transactions=recent_transactions,
+                          total_debits=total_debits,
+                          total_credits=total_credits,
+                          transaction_count=transaction_count,
                           filter_form=filter_form,
                           category_data=json.dumps(category_data),
                           monthly_data=json.dumps(monthly_data),
+                          credit_debit_data=json.dumps(credit_debit_data),
                           selected_year=selected_year,
                           selected_month=selected_month)
 
-def get_expense_by_category(year, month=0):
-    """Get expense data grouped by category for charts"""
-    query = db.session.query(
+def get_transactions_by_category(year, month=0):
+    """Get transaction data grouped by category for charts"""
+    # Query for debit transactions
+    debit_query = db.session.query(
         Category.name,
-        func.sum(Expense.amount).label('total')
+        func.sum(Transaction.amount).label('total')
     ).join(Category).filter(
-        Expense.user_id == current_user.id,
-        Expense.fiscal_year == year
+        Transaction.user_id == current_user.id,
+        Transaction.fiscal_year == year,
+        Transaction.transaction_type == 'debit'
     )
     
     if month > 0:
-        query = query.filter(Expense.month == month)
+        debit_query = debit_query.filter(Transaction.month == month)
         
-    data = query.group_by(Category.name).all()
+    debit_data = debit_query.group_by(Category.name).all()
+    
+    # Query for credit transactions
+    credit_query = db.session.query(
+        Category.name,
+        func.sum(Transaction.amount).label('total')
+    ).join(Category).filter(
+        Transaction.user_id == current_user.id,
+        Transaction.fiscal_year == year,
+        Transaction.transaction_type == 'credit'
+    )
+    
+    if month > 0:
+        credit_query = credit_query.filter(Transaction.month == month)
+        
+    credit_data = credit_query.group_by(Category.name).all()
     
     return {
-        'labels': [item[0] for item in data],
-        'values': [float(item[1]) for item in data]
+        'debit_labels': [item[0] for item in debit_data],
+        'debit_values': [float(item[1]) for item in debit_data],
+        'credit_labels': [item[0] for item in credit_data],
+        'credit_values': [float(item[1]) for item in credit_data]
     }
 
-def get_expense_by_month(year):
-    """Get expense data grouped by month for charts"""
-    query = db.session.query(
-        Expense.month,
-        func.sum(Expense.amount).label('total')
+def get_transactions_by_month(year):
+    """Get transaction data grouped by month for charts"""
+    # Query for debit transactions by month
+    debit_query = db.session.query(
+        Transaction.month,
+        func.sum(Transaction.amount).label('total')
     ).filter(
-        Expense.user_id == current_user.id,
-        Expense.fiscal_year == year
-    ).group_by(Expense.month).order_by(Expense.month).all()
+        Transaction.user_id == current_user.id,
+        Transaction.fiscal_year == year,
+        Transaction.transaction_type == 'debit'
+    ).group_by(Transaction.month).order_by(Transaction.month).all()
+    
+    # Query for credit transactions by month
+    credit_query = db.session.query(
+        Transaction.month,
+        func.sum(Transaction.amount).label('total')
+    ).filter(
+        Transaction.user_id == current_user.id,
+        Transaction.fiscal_year == year,
+        Transaction.transaction_type == 'credit'
+    ).group_by(Transaction.month).order_by(Transaction.month).all()
     
     # Create a list with all months
-    all_months = [(i, 0) for i in range(1, 13)]
+    all_months = [(i, 0, 0) for i in range(1, 13)]  # (month, debit, credit)
     
-    # Fill in the actual data
-    for month, total in query:
-        all_months[month-1] = (month, float(total))
+    # Fill in the debit data
+    for month, total in debit_query:
+        all_months[month-1] = (month, float(total), all_months[month-1][2])
+    
+    # Fill in the credit data
+    for month, total in credit_query:
+        all_months[month-1] = (month, all_months[month-1][1], float(total))
     
     return {
-        'labels': [calendar.month_name[month] for month, _ in all_months],
-        'values': [total for _, total in all_months]
+        'labels': [calendar.month_name[month] for month, _, _ in all_months],
+        'debit_values': [debit for _, debit, _ in all_months],
+        'credit_values': [credit for _, _, credit in all_months]
+    }
+
+def get_credit_vs_debit(year, month=0):
+    """Get credit vs debit totals for pie chart"""
+    # Get total debit transactions
+    debit_query = Transaction.query.filter_by(
+        user_id=current_user.id,
+        fiscal_year=year,
+        transaction_type='debit'
+    )
+    
+    # Get total credit transactions
+    credit_query = Transaction.query.filter_by(
+        user_id=current_user.id,
+        fiscal_year=year,
+        transaction_type='credit'
+    )
+    
+    if month > 0:
+        debit_query = debit_query.filter_by(month=month)
+        credit_query = credit_query.filter_by(month=month)
+        
+    total_debits = debit_query.with_entities(func.sum(Transaction.amount)).scalar() or 0
+    total_credits = credit_query.with_entities(func.sum(Transaction.amount)).scalar() or 0
+    
+    return {
+        'labels': ['Debits (Money Out)', 'Credits (Money In)'],
+        'values': [float(total_debits), float(total_credits)]
     }
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -145,7 +217,8 @@ def register():
             ('Shopping', 'Clothing, electronics, and personal items'),
             ('Travel', 'Flights, hotels, and vacation expenses'),
             ('Education', 'Tuition, books, and courses'),
-            ('Other', 'Miscellaneous expenses')
+            ('Income', 'Salary, freelance work, and other income'),
+            ('Other', 'Miscellaneous transactions')
         ]
         
         for name, description in default_categories:
@@ -183,6 +256,46 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('login'))
+
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    form = ProfileUpdateForm(current_user.email)
+    
+    if form.validate_on_submit():
+        current_user.first_name = form.first_name.data
+        current_user.last_name = form.last_name.data
+        current_user.email = form.email.data
+        
+        db.session.commit()
+        
+        flash('Your profile has been updated!', 'success')
+        return redirect(url_for('profile'))
+    
+    # Pre-populate the form
+    if request.method == 'GET':
+        form.first_name.data = current_user.first_name
+        form.last_name.data = current_user.last_name
+        form.email.data = current_user.email
+    
+    return render_template('profile.html', form=form)
+
+@app.route('/change_password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    form = ChangePasswordForm()
+    
+    if form.validate_on_submit():
+        if current_user.check_password(form.current_password.data):
+            current_user.set_password(form.new_password.data)
+            db.session.commit()
+            
+            flash('Your password has been updated!', 'success')
+            return redirect(url_for('profile'))
+        else:
+            flash('Current password is incorrect.', 'danger')
+    
+    return render_template('change_password.html', form=form)
 
 @app.route('/categories')
 @login_required
@@ -249,8 +362,8 @@ def delete_category(category_id):
         return redirect(url_for('categories'))
     
     # Check if category is in use
-    if Expense.query.filter_by(category_id=category.id).first():
-        flash('Cannot delete category that is in use by expenses.', 'danger')
+    if Transaction.query.filter_by(category_id=category.id).first():
+        flash('Cannot delete category that is in use by transactions.', 'danger')
         return redirect(url_for('categories'))
     
     db.session.delete(category)
@@ -259,38 +372,39 @@ def delete_category(category_id):
     flash('Category has been deleted!', 'success')
     return redirect(url_for('categories'))
 
-@app.route('/expenses')
+@app.route('/transactions')
 @login_required
-def expenses():
+def transactions():
     page = request.args.get('page', 1, type=int)
     per_page = 10
     
-    # Query expenses with joined user and category data for more efficient access
-    expenses = Expense.query.filter_by(user_id=current_user.id).join(
-        Category, Expense.category_id == Category.id).order_by(
-        Expense.date.desc()).paginate(page=page, per_page=per_page, error_out=False)
+    # Query transactions with joined category data for more efficient access
+    transactions = Transaction.query.filter_by(user_id=current_user.id).join(
+        Category, Transaction.category_id == Category.id).order_by(
+        Transaction.date.desc()).paginate(page=page, per_page=per_page, error_out=False)
     
-    return render_template('expenses.html', expenses=expenses)
+    return render_template('transactions.html', transactions=transactions)
 
-@app.route('/expenses/add', methods=['GET', 'POST'])
+@app.route('/transactions/add', methods=['GET', 'POST'])
 @login_required
-def add_expense():
+def add_transaction():
     # Check if user has categories
     if not Category.query.filter_by(user_id=current_user.id).first():
-        flash('You need to create at least one category before adding expenses.', 'warning')
+        flash('You need to create at least one category before adding transactions.', 'warning')
         return redirect(url_for('add_category'))
     
-    form = ExpenseForm(current_user)
+    form = TransactionForm(current_user)
     
     if form.validate_on_submit():
         # Calculate fiscal year and month
-        expense_date = form.date.data
-        fiscal_year = expense_date.year
-        month = expense_date.month
+        transaction_date = form.date.data
+        fiscal_year = transaction_date.year
+        month = transaction_date.month
         
-        expense = Expense(
+        transaction = Transaction(
             amount=form.amount.data,
-            date=expense_date,
+            date=transaction_date,
+            transaction_type=form.transaction_type.data,
             category_id=form.category_id.data,
             description=form.description.data,
             user_id=current_user.id,
@@ -298,65 +412,67 @@ def add_expense():
             month=month
         )
         
-        db.session.add(expense)
+        db.session.add(transaction)
         db.session.commit()
         
-        flash('Expense has been added!', 'success')
-        return redirect(url_for('expenses'))
+        flash('Transaction has been added!', 'success')
+        return redirect(url_for('transactions'))
     
-    return render_template('add_expense.html', form=form)
+    return render_template('add_transaction.html', form=form)
 
-@app.route('/expenses/<int:expense_id>/edit', methods=['GET', 'POST'])
+@app.route('/transactions/<int:transaction_id>/edit', methods=['GET', 'POST'])
 @login_required
-def edit_expense(expense_id):
-    expense = Expense.query.get_or_404(expense_id)
+def edit_transaction(transaction_id):
+    transaction = Transaction.query.get_or_404(transaction_id)
     
-    # Ensure the user owns this expense
-    if expense.user_id != current_user.id:
-        flash('You are not authorized to edit this expense.', 'danger')
-        return redirect(url_for('expenses'))
+    # Ensure the user owns this transaction
+    if transaction.user_id != current_user.id:
+        flash('You are not authorized to edit this transaction.', 'danger')
+        return redirect(url_for('transactions'))
     
-    form = ExpenseForm(current_user)
+    form = TransactionForm(current_user)
     
     if form.validate_on_submit():
         # Calculate fiscal year and month (in case date changed)
-        expense_date = form.date.data
-        fiscal_year = expense_date.year
-        month = expense_date.month
+        transaction_date = form.date.data
+        fiscal_year = transaction_date.year
+        month = transaction_date.month
         
-        expense.amount = form.amount.data
-        expense.date = expense_date
-        expense.category_id = form.category_id.data
-        expense.description = form.description.data
-        expense.fiscal_year = fiscal_year
-        expense.month = month
+        transaction.amount = form.amount.data
+        transaction.date = transaction_date
+        transaction.transaction_type = form.transaction_type.data
+        transaction.category_id = form.category_id.data
+        transaction.description = form.description.data
+        transaction.fiscal_year = fiscal_year
+        transaction.month = month
         
         db.session.commit()
         
-        flash('Expense has been updated!', 'success')
-        return redirect(url_for('expenses'))
+        flash('Transaction has been updated!', 'success')
+        return redirect(url_for('transactions'))
     
-    # Pre-populate the form with current expense data
+    # Pre-populate the form with current transaction data
     if request.method == 'GET':
-        form.amount.data = expense.amount
-        form.date.data = expense.date
-        form.category_id.data = expense.category_id
-        form.description.data = expense.description
+        form.amount.data = transaction.amount
+        form.date.data = transaction.date
+        form.transaction_type.data = transaction.transaction_type
+        form.category_id.data = transaction.category_id
+        form.description.data = transaction.description
     
-    return render_template('edit_expense.html', form=form, expense=expense)
+    return render_template('edit_transaction.html', form=form, transaction=transaction)
 
-@app.route('/expenses/<int:expense_id>/delete', methods=['POST'])
+@app.route('/transactions/<int:transaction_id>/delete', methods=['POST'])
 @login_required
-def delete_expense(expense_id):
-    expense = Expense.query.get_or_404(expense_id)
+def delete_transaction(transaction_id):
+    transaction = Transaction.query.get_or_404(transaction_id)
     
-    # Ensure the user owns this expense
-    if expense.user_id != current_user.id:
-        flash('You are not authorized to delete this expense.', 'danger')
-        return redirect(url_for('expenses'))
+    # Ensure the user owns this transaction
+    if transaction.user_id != current_user.id:
+        flash('You are not authorized to delete this transaction.', 'danger')
+        return redirect(url_for('transactions'))
     
-    db.session.delete(expense)
+    db.session.delete(transaction)
     db.session.commit()
     
-    flash('Expense has been deleted!', 'success')
-    return redirect(url_for('expenses'))
+    flash('Transaction has been deleted!', 'success')
+    return redirect(url_for('transactions'))

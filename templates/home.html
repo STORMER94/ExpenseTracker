@@ -36,13 +36,13 @@
 
 <div class="row mb-4">
     <!-- Summary Cards -->
-    <div class="col-md-6 mb-4">
-        <div class="card bg-primary text-white h-100">
+    <div class="col-md-4 mb-4">
+        <div class="card bg-success text-white h-100">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="text-uppercase">Total Expenses</h6>
-                        <h2 class="mb-0">${{ "%.2f"|format(total_expenses) }}</h2>
+                        <h6 class="text-uppercase">Total Credits</h6>
+                        <h2 class="mb-0">${{ "%.2f"|format(total_credits) }}</h2>
                         <small>
                             {% if selected_month > 0 %}
                                 {{ filter_form.month.choices[selected_month][1] }} 
@@ -51,20 +51,42 @@
                         </small>
                     </div>
                     <div>
-                        <i class="fas fa-money-bill-wave fa-3x opacity-50"></i>
+                        <i class="fas fa-arrow-down fa-3x opacity-50"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <div class="col-md-6 mb-4">
+    <div class="col-md-4 mb-4">
+        <div class="card bg-danger text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase">Total Debits</h6>
+                        <h2 class="mb-0">${{ "%.2f"|format(total_debits) }}</h2>
+                        <small>
+                            {% if selected_month > 0 %}
+                                {{ filter_form.month.choices[selected_month][1] }} 
+                            {% endif %}
+                            FY {{ selected_year }}
+                        </small>
+                    </div>
+                    <div>
+                        <i class="fas fa-arrow-up fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
         <div class="card bg-info text-white h-100">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="text-uppercase">Number of Expenses</h6>
-                        <h2 class="mb-0">{{ expenses_count }}</h2>
+                        <h6 class="text-uppercase">Number of Transactions</h6>
+                        <h2 class="mb-0">{{ transaction_count }}</h2>
                         <small>
                             {% if selected_month > 0 %}
                                 {{ filter_form.month.choices[selected_month][1] }} 
@@ -86,10 +108,10 @@
     <div class="col-md-6 mb-4">
         <div class="card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Expenses by Category</h5>
+                <h5 class="mb-0">Credit vs Debit</h5>
             </div>
             <div class="card-body">
-                <canvas id="categoryChart"></canvas>
+                <canvas id="creditDebitChart"></canvas>
             </div>
         </div>
     </div>
@@ -97,7 +119,7 @@
     <div class="col-md-6 mb-4">
         <div class="card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Monthly Expenses</h5>
+                <h5 class="mb-0">Monthly Transactions</h5>
             </div>
             <div class="card-body">
                 <canvas id="monthlyChart"></canvas>
@@ -107,14 +129,38 @@
 </div>
 
 <div class="row mb-4">
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Debit by Category</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="debitCategoryChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Credit by Category</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="creditCategoryChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
     <div class="col-md-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Recent Expenses</h5>
-                <a href="{{ url_for('expenses') }}" class="btn btn-sm btn-primary">View All</a>
+                <h5 class="mb-0">Recent Transactions</h5>
+                <a href="{{ url_for('transactions') }}" class="btn btn-sm btn-primary">View All</a>
             </div>
             <div class="card-body p-0">
-                {% if recent_expenses %}
+                {% if recent_transactions %}
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <thead>
@@ -122,20 +168,28 @@
                                 <th>Description</th>
                                 <th>Category</th>
                                 <th>Date</th>
+                                <th>Type</th>
                                 <th>Amount</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for expense in recent_expenses %}
+                            {% for transaction in recent_transactions %}
                             <tr>
-                                <td>{{ expense.description }}</td>
+                                <td>{{ transaction.description }}</td>
                                 <td>
                                     <span class="badge bg-secondary">
-                                        {{ expense.category_info.name }}
+                                        {{ transaction.category_info.name }}
                                     </span>
                                 </td>
-                                <td>{{ expense.date.strftime('%b %d, %Y') }}</td>
-                                <td>${{ "%.2f"|format(expense.amount) }}</td>
+                                <td>{{ transaction.date.strftime('%b %d, %Y') }}</td>
+                                <td>
+                                    {% if transaction.transaction_type == 'debit' %}
+                                    <span class="badge bg-danger">Debit</span>
+                                    {% else %}
+                                    <span class="badge bg-success">Credit</span>
+                                    {% endif %}
+                                </td>
+                                <td>${{ "%.2f"|format(transaction.amount) }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -143,9 +197,9 @@
                 </div>
                 {% else %}
                 <div class="p-4 text-center">
-                    <p class="mb-0">You haven't added any expenses yet.</p>
-                    <a href="{{ url_for('add_expense') }}" class="btn btn-primary mt-3">
-                        <i class="fas fa-plus-circle me-1"></i> Add Your First Expense
+                    <p class="mb-0">You haven't added any transactions yet.</p>
+                    <a href="{{ url_for('add_transaction') }}" class="btn btn-primary mt-3">
+                        <i class="fas fa-plus-circle me-1"></i> Add Your First Transaction
                     </a>
                 </div>
                 {% endif %}
@@ -156,8 +210,8 @@
 
 <div class="row">
     <div class="col-md-12 text-center">
-        <a href="{{ url_for('add_expense') }}" class="btn btn-lg btn-success">
-            <i class="fas fa-plus-circle me-1"></i> Add New Expense
+        <a href="{{ url_for('add_transaction') }}" class="btn btn-lg btn-success">
+            <i class="fas fa-plus-circle me-1"></i> Add New Transaction
         </a>
     </div>
 </div>
@@ -169,18 +223,48 @@ document.addEventListener('DOMContentLoaded', function() {
     // Prepare data for charts
     const categoryData = {{ category_data|safe }};
     const monthlyData = {{ monthly_data|safe }};
+    const creditDebitData = {{ credit_debit_data|safe }};
     
-    // Pie Chart for Categories
-    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-    new Chart(categoryCtx, {
+    // Pie Chart for Credit vs Debit
+    const creditDebitCtx = document.getElementById('creditDebitChart').getContext('2d');
+    new Chart(creditDebitCtx, {
         type: 'pie',
         data: {
-            labels: categoryData.labels,
+            labels: creditDebitData.labels,
             datasets: [{
-                data: categoryData.values,
+                data: creditDebitData.values,
                 backgroundColor: [
-                    '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', 
-                    '#e74a3b', '#858796', '#6f42c1', '#5a5c69',
+                    '#e74a3b', // Red for Debits
+                    '#1cc88a'  // Green for Credits
+                ],
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                },
+                title: {
+                    display: true,
+                    text: 'Credit vs Debit Distribution'
+                }
+            }
+        }
+    });
+    
+    // Pie Chart for Debit Categories
+    const debitCategoryCtx = document.getElementById('debitCategoryChart').getContext('2d');
+    new Chart(debitCategoryCtx, {
+        type: 'pie',
+        data: {
+            labels: categoryData.debit_labels,
+            datasets: [{
+                data: categoryData.debit_values,
+                backgroundColor: [
+                    '#4e73df', '#e74a3b', '#36b9cc', '#f6c23e', 
+                    '#858796', '#6f42c1', '#5a5c69',
                     '#fd7e14', '#20c9a6', '#e83e8c', '#6610f2'
                 ],
                 hoverOffset: 4
@@ -194,7 +278,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 title: {
                     display: true,
-                    text: 'Expense Distribution'
+                    text: 'Debits by Category'
+                }
+            }
+        }
+    });
+    
+    // Pie Chart for Credit Categories
+    const creditCategoryCtx = document.getElementById('creditCategoryChart').getContext('2d');
+    new Chart(creditCategoryCtx, {
+        type: 'pie',
+        data: {
+            labels: categoryData.credit_labels,
+            datasets: [{
+                data: categoryData.credit_values,
+                backgroundColor: [
+                    '#1cc88a', '#4e73df', '#36b9cc', '#f6c23e', 
+                    '#e74a3b', '#858796', '#6f42c1', '#5a5c69',
+                    '#fd7e14', '#20c9a6', '#e83e8c'
+                ],
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                },
+                title: {
+                    display: true,
+                    text: 'Credits by Category'
                 }
             }
         }
@@ -206,13 +320,22 @@ document.addEventListener('DOMContentLoaded', function() {
         type: 'bar',
         data: {
             labels: monthlyData.labels,
-            datasets: [{
-                label: 'Expenses',
-                data: monthlyData.values,
-                backgroundColor: '#4e73df',
-                borderColor: '#2e59d9',
-                borderWidth: 1
-            }]
+            datasets: [
+                {
+                    label: 'Debits',
+                    data: monthlyData.debit_values,
+                    backgroundColor: '#e74a3b',
+                    borderColor: '#c23616',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Credits',
+                    data: monthlyData.credit_values,
+                    backgroundColor: '#1cc88a',
+                    borderColor: '#10954a',
+                    borderWidth: 1
+                }
+            ]
         },
         options: {
             responsive: true,
@@ -229,7 +352,7 @@ document.addEventListener('DOMContentLoaded', function() {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Monthly Expense Trends'
+                    text: 'Monthly Transaction Trends'
                 }
             }
         }
