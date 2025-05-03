@@ -42,7 +42,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="text-uppercase">Total Credits</h6>
-                        <h2 class="mb-0">${{ "%.2f"|format(total_credits) }}</h2>
+                        <h2 class="mb-0">₹{{ "%.2f"|format(total_credits) }}</h2>
                         <small>
                             {% if selected_month > 0 %}
                                 {{ filter_form.month.choices[selected_month][1] }} 
@@ -64,7 +64,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="text-uppercase">Total Debits</h6>
-                        <h2 class="mb-0">${{ "%.2f"|format(total_debits) }}</h2>
+                        <h2 class="mb-0">₹{{ "%.2f"|format(total_debits) }}</h2>
                         <small>
                             {% if selected_month > 0 %}
                                 {{ filter_form.month.choices[selected_month][1] }} 
@@ -189,7 +189,7 @@
                                     <span class="badge bg-success">Credit</span>
                                     {% endif %}
                                 </td>
-                                <td>${{ "%.2f"|format(transaction.amount) }}</td>
+                                <td>₹{{ "%.2f"|format(transaction.amount) }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
