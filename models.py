@@ -71,4 +71,4 @@ class Transaction(db.Model):
     month = db.Column(db.Integer, nullable=False)
     
     def __repr__(self):
-        return f'<Transaction ₹{self.amount:.2f} - {self.transaction_type} - {self.description}>'
+        return f'<Transaction ₹\u00A0{self.amount:.2f} - {self.transaction_type} - {self.description}>'
