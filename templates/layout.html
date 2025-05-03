@@ -11,10 +11,23 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <style>
+        /* Use a more stable solution for the Rupee symbol */
         .currency-symbol {
             display: inline-block;
             margin-right: 2px;
             font-family: Arial, sans-serif;
+        }
+        
+        /* Prevent modal shaking by ensuring stable width */
+        .modal-dialog {
+            width: 100%;
+            max-width: 500px;
+        }
+        
+        /* Apply special styling for currency inside modals */
+        .modal .currency-amount {
+            font-family: monospace;
+            font-weight: bold;
         }
     </style>
 </head>
