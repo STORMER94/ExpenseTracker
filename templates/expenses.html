@@ -32,8 +32,8 @@
                 <tbody>
                     {% for expense in expenses.items %}
                     <tr>
-                        <td>{{ expense.title }}</td>
-                        <td>
+                        <td data-label="Title">{{ expense.title }}</td>
+                        <td data-label="Category">
                             <span class="badge 
                             {% if expense.category == 'food' %}bg-success
                             {% elif expense.category == 'transportation' %}bg-info
@@ -44,13 +44,13 @@
                                 {{ expense.category|capitalize }}
                             </span>
                         </td>
-                        <td>{{ expense.date.strftime('%b %d, %Y') }}</td>
-                        <td>${{ "%.2f"|format(expense.amount) }}</td>
-                        <td>
+                        <td data-label="Date">{{ expense.date.strftime('%b %d, %Y') }}</td>
+                        <td data-label="Amount">${{ "%.2f"|format(expense.amount) }}</td>
+                        <td data-label="User">
                             <!-- User's first and last name displayed here -->
                             <span class="fw-bold user-name">{{ expense.user.first_name }} {{ expense.user.last_name }}</span>
                         </td>
-                        <td>
+                        <td data-label="Actions">
                             <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ expense.id }}">
                                 <i class="fas fa-trash"></i>
                             </button>
