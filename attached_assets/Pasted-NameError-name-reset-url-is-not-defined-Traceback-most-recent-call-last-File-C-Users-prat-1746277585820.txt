@@ -1,0 +1,29 @@
+NameError: name 'reset_url' is not defined
+
+Traceback (most recent call last)
+File "C:\Users\prathamesh.kuperkar.UFOMOVIEZ\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1536, in __call__
+return self.wsgi_app(environ, start_response)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "C:\Users\prathamesh.kuperkar.UFOMOVIEZ\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\middleware\proxy_fix.py", line 183, in __call__
+return self.app(environ, start_response)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "C:\Users\prathamesh.kuperkar.UFOMOVIEZ\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1514, in wsgi_app
+response = self.handle_exception(e)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+File "C:\Users\prathamesh.kuperkar.UFOMOVIEZ\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+response = self.full_dispatch_request()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "C:\Users\prathamesh.kuperkar.UFOMOVIEZ\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+rv = self.handle_user_exception(e)
+     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "C:\Users\prathamesh.kuperkar.UFOMOVIEZ\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+rv = self.dispatch_request()
+     ^^^^^^^^^^^^^^^^^^^^^^^
+File "C:\Users\prathamesh.kuperkar.UFOMOVIEZ\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "C:\Users\prathamesh.kuperkar.UFOMOVIEZ\Downloads\ReplitExport-prathmeshk94 (2)\ExpenseTracker\routes.py", line 545, in reset_password_request
+send_password_reset_email(user)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "C:\Users\prathamesh.kuperkar.UFOMOVIEZ\Downloads\ReplitExport-prathmeshk94 (2)\ExpenseTracker\email_utils.py", line 15, in send_password_reset_email
+print(f"{reset_url}")
